@@ -1,0 +1,57 @@
+# Logs
+pnpm-debug.log*
+
+# Dependency directories
+node_modules/
+
+# pnpm local store
+.pnpm-store/
+
+# dotenv files
+.env
+.env.*
+!.env.example
+
+# VS Code settings
+.vscode/
+
+# Sonarlint settings
+.sonarlint/
+
+# SonarScanner CLI working directory
+.scannerwork/
+
+# Claude settings
+.claude/settings.local.json
+
+# Coverage
+coverage/
+*.lcov
+.vitest-coverage/
+
+# Build
+dist/
+src-tauri/binaries/*.exe
+
+# Bundle-optimizer results
+stats.html
+
+# Playwright
+playwright-report/
+test-results/
+blob-reports/
+
+# Tauri
+src-tauri/target/
+
+# Sentry Config File
+.env.sentry-build-plugin
+
+# Android signing
+src-tauri/keystore.properties
+*.jks
+*.keystore
+
+# Worker
+worker/.wrangler
+.dev.vars

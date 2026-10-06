@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Multilingual translation app built with Tauri 2, using the DeepL and Lara engines.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="/logo.svg" type="image/svg+xml">
+  <title>Ponto</title>
+  <script src="src/main.js" type="module"></script>
+</head>
+
+<body>
+  <aside class="install" id="install" hidden aria-label="Installer Ponto" data-i18n-attr="aria-label:install.label">
+    <div class="install-body">
+      <p id="install-text" data-i18n="install.native">Ponto existe en application native pour votre appareil, plus rapide et sans navigateur.</p>
+      <p class="install-note" id="install-keys" data-i18n="install.keysNote" hidden>Le stockage de l'application installée est séparé de Safari : vous devrez y ressaisir vos clés.</p>
+    </div>
+    <a class="btn-small" id="install-native" target="_blank"
+      rel="noopener noreferrer" data-i18n="install.nativeLink" hidden>Télécharger l'application</a>
+    <button type="button" class="btn-small" id="install-accept" data-i18n="install.button" hidden>Installer</button>
+    <button type="button" class="btn-link" id="install-later" data-i18n="install.later">Plus tard</button>
+  </aside>
+
+  <aside class="install" id="update" hidden role="status" aria-label="Mise à jour disponible" data-i18n-attr="aria-label:update.label">
+    <div class="install-body">
+      <p data-i18n="update.text">Une nouvelle version de Ponto est disponible. La mise à jour recharge la page.</p>
+    </div>
+    <button type="button" class="btn-small" id="update-accept" data-i18n="update.button">Mettre à jour</button>
+    <button type="button" class="btn-link" id="update-later" data-i18n="update.later">Plus tard</button>
+  </aside>
+
+  <header class="toolbar">
+    <div class="brand">
+      <img src="/logo.svg" alt="" width="36" height="36" />
+      <span class="brand-name">Ponto</span>
+    </div>
+    <div class="spacer"></div>
+
+    <fieldset class="segmented segmented-pill" aria-label="Moteur de traduction" data-i18n-attr="aria-label:provider.label" id="provider">
+      <button type="button" data-value="deepl">DeepL</button>
+      <button type="button" data-value="lara">Lara</button>
+      <button type="button" data-value="both" data-i18n="provider.both">Les deux</button>
+    </fieldset>
+
+    <div class="langbar">
+      <div class="lang-side">
+        <button type="button" class="lang" id="src-lang" aria-haspopup="dialog"
+          title="Choisir la langue source" data-i18n-attr="title:lang.sourceTitle">Anglais</button>
+        <div class="spacer"></div>
+        <button type="button" class="icon-btn round accent" id="swap" aria-label="Inverser les langues"
+          data-i18n-attr="aria-label:lang.swap">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 8h15l-4-4M20 16H5l4 4" />
+          </svg>
+        </button>
+      </div>
+      <div class="lang-side">
+        <button type="button" class="lang" id="dst-lang" aria-haspopup="dialog"
+          title="Choisir la langue cible" data-i18n-attr="title:lang.targetTitle">Français</button>
+        <div class="spacer"></div>
+        <fieldset class="segmented" aria-label="Formalité" id="formality" title="Registre poli / familier"
+          data-i18n-attr="aria-label:formality.label;title:formality.title">
+          <button type="button" data-value="true" data-i18n="formality.formal">Vous</button>
+          <button type="button" data-value="false" data-i18n="formality.informal">Tu</button>
+        </fieldset>
+      </div>
+    </div>
+
+    <button type="button" class="icon-btn bordered" id="theme-toggle" aria-pressed="false"
+      aria-label="Inverser le thème clair / sombre"
+      data-i18n-attr="aria-label:theme.toggle">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z" />
+      </svg>
+    </button>
+    <button type="button" class="icon-btn bordered" id="open-settings" aria-label="Paramètres" data-i18n-attr="aria-label:settings.open">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1" />
+        <circle cx="15" cy="6" r="2" />
+        <circle cx="9" cy="12" r="2" />
+        <circle cx="17" cy="18" r="2" />
+      </svg>
+    </button>
+  </header>
+
+  <main class="panes" id="panes" data-mode="deepl"></main>
+
+  <footer class="bottombar">
+    <div class="bottombar-recent">
+      <span class="recent-label">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 2" />
+        </svg>
+        <span data-i18n="recent">Récent</span>
+      </span>
+      <div class="history" id="history"></div>
+    </div>
+    <button type="button" class="btn-primary" id="translate-all">
+      <span id="translate-all-label" data-i18n="translate">Traduire</span><kbd>Ctrl ↵</kbd>
+    </button>
+  </footer>
+
+  <!-- Une ligne par moteur : source à gauche, traduction à droite. -->
+  <template id="engine-row">
+    <section class="row">
+      <div class="pane pane-source">
+        <div class="pane-head">
+          <span class="pane-label" data-i18n="pane.source">Texte source</span>
+          <span class="tag engine-tag"></span>
+        </div>
+        <textarea class="source" aria-label="Texte source" placeholder="Saisissez ou collez votre texte…"
+          data-i18n-attr="aria-label:pane.source;placeholder:pane.placeholder" spellcheck="true"></textarea>
+        <div class="pane-foot">
+          <span class="count">0 / 10&#8239;000</span>
+          <div class="spacer"></div>
+          <button type="button" class="icon-btn clear" aria-label="Effacer le texte" data-i18n-attr="aria-label:pane.clear">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 6l12 12M18 6 6 18" />
+            </svg>
+          </button>
+          <button type="button" class="btn-small translate-one" data-i18n="translate">Traduire</button>
+        </div>
+      </div>
+      <div class="pane pane-target">
+        <div class="pane-head">
+          <span class="pane-label" data-i18n="pane.target">Traduction</span>
+        </div>
+        <output class="target" aria-live="polite"></output>
+        <div class="pane-foot">
+          <span class="tag engine-badge"></span>
+          <div class="spacer"></div>
+          <button type="button" class="icon-btn speak" aria-label="Écouter la traduction" data-i18n-attr="aria-label:pane.speak">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M11 5 6 9H3v6h3l5 4z" />
+              <path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" />
+            </svg>
+          </button>
+          <button type="button" class="icon-btn copy" aria-label="Copier la traduction" data-i18n-attr="aria-label:pane.copy">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="9" y="9" width="11" height="11" rx="2" />
+              <path d="M5 15V6a2 2 0 0 1 2-2h8" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </section>
+  </template>
+
+  <dialog id="settings" closedby="any" aria-labelledby="settings-title">
+    <form method="dialog" id="settings-form">
+      <div class="dialog-head">
+        <h2 id="settings-title" data-i18n="settings.title">Paramètres</h2>
+        <div class="spacer"></div>
+        <button type="submit" class="btn-primary" value="save" data-i18n="settings.save">Enregistrer</button>
+        <button type="submit" class="icon-btn" value="cancel" formnovalidate aria-label="Fermer sans enregistrer"
+          data-i18n-attr="aria-label:settings.closeNoSave">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 6l12 12M18 6 6 18" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="dialog-body">
+        <fieldset class="card">
+          <legend data-i18n="settings.apiKeys">Clés API</legend>
+
+          <div class="field">
+            <div class="field-label">
+              <label for="deepl-key" data-i18n="settings.deeplKey">Clé DeepL</label>
+              <span class="hint ok" id="deepl-hint"></span>
+            </div>
+            <div class="input-with-btn">
+              <input id="deepl-key" name="deeplKey" type="password" autocomplete="off" spellcheck="false" />
+              <button type="button" class="icon-btn reveal" data-for="deepl-key" aria-label="Afficher la clé"
+                data-i18n-attr="aria-label:settings.showKey" aria-pressed="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="lara-id">Lara — Access Key ID</label>
+            <input id="lara-id" name="laraId" type="text" autocomplete="off" spellcheck="false" />
+          </div>
+
+          <div class="field">
+            <label for="lara-secret">Lara — Access Key Secret</label>
+            <div class="input-with-btn">
+              <input id="lara-secret" name="laraSecret" type="password" autocomplete="off" spellcheck="false" />
+              <button type="button" class="icon-btn reveal" data-for="lara-secret" aria-label="Afficher le secret"
+                data-i18n-attr="aria-label:settings.showSecret" aria-pressed="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <button type="button" class="btn-danger" id="clear-keys" data-i18n="settings.clearKeys" hidden>Effacer mes clés</button>
+        </fieldset>
+
+        <div class="side">
+          <fieldset class="card">
+            <legend data-i18n="settings.preferences">Préférences</legend>
+            <div class="field">
+              <label for="ui-lang" data-i18n="settings.uiLang">Langue de l'interface</label>
+              <select id="ui-lang" name="uiLang">
+                <option value="fr">Français</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+            <label class="switch-row" for="auto-translate">
+              <span data-i18n="settings.autoTranslate">Traduction automatique pendant la saisie</span>
+              <input type="checkbox" role="switch" name="autoTranslate" id="auto-translate" aria-checked="false" />
+            </label>
+          </fieldset>
+          <fieldset class="card">
+            <legend data-i18n="settings.voices">Voix de lecture</legend>
+            <div class="voice-list" id="voice-list"></div>
+          </fieldset>
+          <p class="note">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="4" y="11" width="16" height="10" rx="2" />
+              <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+            </svg>
+            <span data-i18n="settings.note">Vos clés sont enregistrées en clair dans le fichier settings.json de cet appareil et ne sont jamais incluses
+              dans l'application. Vos textes sont envoyés à DeepL et à Lara pour être traduits.</span>
+          </p>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="lang-picker" closedby="any" aria-labelledby="lang-picker-title">
+    <form method="dialog" class="picker">
+      <div class="dialog-head">
+        <h2 id="lang-picker-title" data-i18n="picker.titleTarget">Langue cible</h2>
+        <div class="spacer"></div>
+        <button type="submit" class="icon-btn" value="" aria-label="Fermer" data-i18n-attr="aria-label:picker.close">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 6l12 12M18 6 6 18" />
+          </svg>
+        </button>
+      </div>
+      <label for="lang-search" class="sr-only" data-i18n="picker.search">Rechercher une langue</label>
+      <input type="search" id="lang-search" class="picker-search" placeholder="Rechercher une langue…"
+        data-i18n-attr="placeholder:picker.searchPlaceholder" autocomplete="off" spellcheck="false" />
+      <div class="picker-list" id="lang-list"></div>
+    </form>
+  </dialog>
+
+  <output class="toast" id="toast" aria-live="polite"></output>
+
+</body>
+
+</html>

@@ -1,0 +1,16 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "desktop-only",
+  "description": "Permissions for plugins that only run on desktop builds (Windows). tauri-plugin-single-instance has no invokable commands, so it needs no entry here.",
+  "windows": [
+    "main"
+  ],
+  "platforms": [
+    "windows"
+  ],
+  "permissions": [
+    "process:allow-restart",
+    "updater:default",
+    "window-state:default"
+  ]
+}

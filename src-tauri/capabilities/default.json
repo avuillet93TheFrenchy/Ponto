@@ -1,0 +1,19 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Permissions shared by Windows and Android",
+  "windows": [
+    "main"
+  ],
+  "platforms": [
+    "windows",
+    "android"
+  ],
+  "permissions": [
+    "core:default",
+    "log:default",
+    "process:allow-exit",
+    "sentry:default",
+    "store:default"
+  ]
+}
