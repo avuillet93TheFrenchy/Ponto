@@ -206,7 +206,7 @@ describe('coffre de clés', () => {
     expect(await vaultGet('a')).toBe('1');
   });
 
-  it("une écriture dont la transaction est annulée avant la validation ne passe pas pour réussie", async () => {
+  it('une écriture dont la transaction est annulée avant la validation ne passe pas pour réussie', async () => {
     const original = IDBObjectStore.prototype.put;
     vi.spyOn(IDBObjectStore.prototype, 'put').mockImplementation(/** @this {IDBObjectStore} */ function (...args) {
       const request = original.apply(this, args);
@@ -220,6 +220,24 @@ describe('coffre de clés', () => {
     expect(await vaultIsPersistent()).toBe(false);
     expect(await vaultGet('a')).toBe('valeur');
   });
+
+  it.each(['get', 'put'])(
+    'la création de la clé maîtresse rejette quand sa requête %s échoue',
+    async (method) => {
+      vi.spyOn(IDBObjectStore.prototype, /** @type {'get' | 'put'} */ (method)).mockImplementation(() => {
+        /** @type {{ error: DOMException, onerror?: () => void }} */
+        const request = { error: new DOMException('quota', 'QuotaExceededError') };
+        queueMicrotask(() => request.onerror?.());
+        return /** @type {any} */ (request);
+      });
+
+      await vaultSet('a', 'valeur');
+
+      // The key never reached the disk: a value encrypted with it would be unreadable after a reload.
+      expect(await vaultIsPersistent()).toBe(false);
+      expect(await vaultGet('a')).toBe('valeur');
+    },
+  );
 
   it("laisse une autre version de la base s'ouvrir (onversionchange)", async () => {
     await vaultSet('a', '1');
@@ -245,6 +263,16 @@ describe('coffre de clés', () => {
     await vaultSet('a', 'mem');
     expect(await vaultGet('a')).toBe('mem');
     expect(await vaultIsPersistent()).toBe(false);
+  });
+
+  it('vaultDelete rejette quand IndexedDB ne peut pas supprimer la valeur', async () => {
+    await vaultSet('a', '1');
+    vi.spyOn(IDBObjectStore.prototype, 'delete').mockImplementation(() => {
+      throw new Error('delete failed');
+    });
+    await expect(vaultDelete('a')).rejects.toThrow('delete failed');
+    expect(await vaultIsPersistent()).toBe(false);
+    expect(await vaultGet('a')).toBeNull();
   });
 
   it('IndexedDB indisponible → fonctionne en mémoire, vaultIsPersistent() est faux', async () => {

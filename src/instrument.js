@@ -27,7 +27,9 @@ Sentry.init({
 	transport: isTauri() ? makeRendererTransport : undefined,
 	beforeSend: scrubEvent,
 	beforeSendTransaction: scrubEvent,
-	beforeBreadcrumb: isTauri() ? sendBreadcrumbToRust : scrubBreadcrumb,
+	beforeBreadcrumb: isTauri()
+		? (breadcrumb) => sendBreadcrumbToRust(scrubBreadcrumb(breadcrumb))
+		: scrubBreadcrumb,
 
 	tracesSampleRate: import.meta.env.MODE === 'production' ? 0.2 : 1,
 });

@@ -151,11 +151,13 @@ async function createMasterKey(db) {
     /** @type {CryptoKey} */
     let winner = fresh;
     const read = store.get(MASTER_ID);
+    read.onerror = () => reject(transactionError(tx, read));
     read.onsuccess = () => {
       if (read.result) {
         winner = read.result;
       } else {
-        store.put(fresh, MASTER_ID);
+        const write = store.put(fresh, MASTER_ID);
+        write.onerror = () => reject(transactionError(tx, write));
       }
     };
     tx.oncomplete = () => resolve(winner);
@@ -245,6 +247,8 @@ export async function vaultSet(name, value) {
 }
 
 /**
+ * Rejects when the persistent store could not delete the value (it may still
+ * be on disk); the memory copy is always removed.
  * @param {string} name
  * @returns {Promise<void>}
  */
@@ -257,8 +261,9 @@ export async function vaultDelete(name) {
   }
   try {
     await run(db, 'readwrite', (store) => store.delete(name));
-  } catch {
+  } catch (error) {
     fallBackToMemory();
+    throw error;
   }
 }
 
