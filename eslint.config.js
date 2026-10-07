@@ -20,7 +20,7 @@ export default defineConfig([
   { files: NODE_TOOLING_SCRIPTS, languageOptions: { globals: globals.node } },
   {
     files: ['__tests__/**/*.js'],
-    languageOptions: { globals: globals.vitest },
+    languageOptions: { globals: { ...globals.vitest, ...globals.node } },
   },
   {
     files: ['**/*.js'],

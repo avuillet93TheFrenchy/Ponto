@@ -26,10 +26,10 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
     "lint": "pnpm run lint:js && pnpm run lint:css && pnpm run lint:html",
-    "lint:js": "eslint src",
+    "lint:js": "eslint src __tests__",
     "lint:css": "stylelint \"src/**/*.{css,scss,sass}\"",
     "lint:html": "htmlhint \"index.html\"",
-    "lint:fix:js": "eslint src --fix",
+    "lint:fix:js": "eslint src __tests__ --fix",
     "lint:fix:css": "stylelint \"src/**/*.{css,scss}\" --fix"
   },
   "keywords": [
