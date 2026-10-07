@@ -49,6 +49,29 @@ export function scrubBreadcrumb(breadcrumb) {
   return { ...breadcrumb, data: copy };
 }
 
+const HEADER_ATTRIBUTE_PREFIX = 'http.request.header.';
+
+/**
+ * Returns a copy of a streamed span without the `http.request.header.<name>` attributes of the
+ * key headers. The name may be written with dashes or, as OpenTelemetry does, with underscores.
+ * @template {{ attributes?: Record<string, unknown> }} T
+ * @param {T} span
+ * @returns {T}
+ */
+export function scrubSpan(span) {
+  if (!span.attributes) return span;
+  const attributes = Object.fromEntries(
+    Object.entries(span.attributes).filter(([key]) => {
+      const lower = key.toLowerCase();
+      return !(
+        lower.startsWith(HEADER_ATTRIBUTE_PREFIX) &&
+        isKeyHeader(lower.slice(HEADER_ATTRIBUTE_PREFIX.length).replaceAll('_', '-'))
+      );
+    }),
+  );
+  return { ...span, attributes };
+}
+
 /**
  * Works for error events and transaction events alike.
  * @template {{ request?: { headers?: any }, breadcrumbs?: Breadcrumb[] }} T

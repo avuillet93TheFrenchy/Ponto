@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { scrubEvent, scrubBreadcrumb } from '../src/js/web/scrub.js';
+import { scrubEvent, scrubBreadcrumb, scrubSpan } from '../src/js/web/scrub.js';
 
 /** @typedef {import('@sentry/browser').ErrorEvent} ErrorEvent */
 /** @typedef {import('@sentry/browser').Breadcrumb} Breadcrumb */
@@ -99,5 +99,37 @@ describe('scrubBreadcrumb', () => {
     );
     expect(JSON.stringify(out)).not.toMatch(/secret/);
     expect(out.request?.headers).toEqual({ Accept: '*/*' });
+  });
+});
+
+describe('scrubSpan', () => {
+  it('retire les attributs des trois en-têtes de clé, tirets ou underscores, casse mélangée', () => {
+    const span = {
+      name: 'POST /api/translate/deepl',
+      attributes: {
+        'http.request.header.x-deepl-key': ['secret1'],
+        'http.request.header.X-Lara-Id': ['secret2'],
+        'http.request.header.x_lara_secret': ['secret3'],
+        'http.request.header.accept': ['*/*'],
+        'http.request.method': 'POST',
+      },
+    };
+    const out = scrubSpan(span);
+    expect(JSON.stringify(out)).not.toMatch(/secret/);
+    expect(out.attributes).toEqual({
+      'http.request.header.accept': ['*/*'],
+      'http.request.method': 'POST',
+    });
+  });
+
+  it("ne modifie pas le span d'origine", () => {
+    const span = { attributes: { 'http.request.header.x-deepl-key': ['secret1'] } };
+    scrubSpan(span);
+    expect(span.attributes).toEqual({ 'http.request.header.x-deepl-key': ['secret1'] });
+  });
+
+  it('renvoie tel quel un span sans attributs', () => {
+    const span = { name: 'idle', attributes: undefined };
+    expect(scrubSpan(span)).toBe(span);
   });
 });

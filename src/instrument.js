@@ -1,7 +1,7 @@
 import { isTauri } from '@tauri-apps/api/core';
 import * as Sentry from '@sentry/browser';
 import { defaultOptions, makeRendererTransport, sendBreadcrumbToRust } from 'tauri-plugin-sentry-api';
-import { scrubBreadcrumb, scrubEvent } from './js/web/scrub.js';
+import { scrubBreadcrumb, scrubEvent, scrubSpan } from './js/web/scrub.js';
 
 Sentry.init({
 	...defaultOptions,
@@ -26,7 +26,8 @@ Sentry.init({
 
 	transport: isTauri() ? makeRendererTransport : undefined,
 	beforeSend: scrubEvent,
-	beforeSendTransaction: scrubEvent,
+	// `beforeSendTransaction` is ignored with the default `traceLifecycle: 'stream'`.
+	beforeSendSpan: Sentry.withStreamedSpan(scrubSpan),
 	beforeBreadcrumb: isTauri()
 		? (breadcrumb) => sendBreadcrumbToRust(scrubBreadcrumb(breadcrumb))
 		: scrubBreadcrumb,
