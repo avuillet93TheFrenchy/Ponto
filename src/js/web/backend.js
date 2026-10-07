@@ -2,7 +2,8 @@
  * @module web/backend
  * @description Web replacement for the Rust commands: calls the Cloudflare Worker (`/api/*`) with the
  * user's own keys, read from the encrypted vault and sent in headers only (never in a URL or a body).
- * Failures are thrown as French strings, like a rejected `invoke()`, so `errors.js` recognises them.
+ * Failures are thrown as `Error`s whose message is the French text a Rust command would reject with,
+ * so `errors.js` recognises them once `tauriInvoke` wraps them in a `CoreError` (`causeText` reads `message`).
  */
 import { webStoreGet } from './storage.js';
 
@@ -47,16 +48,16 @@ async function readKey(name) {
  *
  * @param {'DeepL' | 'Lara'} engine
  * @returns {Promise<Record<string, string>>}
- * @throws {string} The "missing credentials" text when a key is absent.
+ * @throws {Error} The "missing credentials" text when a key is absent.
  */
 async function credentialHeaders(engine) {
   if (engine === 'DeepL') {
     const key = await readKey('deeplKey');
-    if (!key) throw MISSING.DeepL;
+    if (!key) throw new Error(MISSING.DeepL);
     return { 'X-Deepl-Key': key };
   }
   const [id, secret] = await Promise.all([readKey('laraId'), readKey('laraSecret')]);
-  if (!id || !secret) throw MISSING.Lara;
+  if (!id || !secret) throw new Error(MISSING.Lara);
   return { 'X-Lara-Id': id, 'X-Lara-Secret': secret };
 }
 
@@ -91,7 +92,7 @@ function truncate(text) {
  * @param {Record<string, unknown>} body
  * @param {Record<string, string>} credentials
  * @returns {Promise<unknown>}
- * @throws {string} The Worker's error text, or a network / invalid response text.
+ * @throws {Error} The Worker's error text, or a network / invalid response text.
  */
 async function post({ route, engine }, body, credentials) {
   let response;
@@ -104,7 +105,7 @@ async function post({ route, engine }, body, credentials) {
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
   } catch (err) {
-    throw `Erreur réseau ${engine} : ${messageOf(err)}`;
+    throw new Error(`Erreur réseau ${engine} : ${messageOf(err)}`, { cause: err });
   }
 
   /** @type {unknown} */
@@ -113,11 +114,11 @@ async function post({ route, engine }, body, credentials) {
     data = await response.json();
   } catch {
     // No parser message here: it is raw English and would end up in error reports.
-    throw `Réponse ${engine} invalide : réponse non JSON (statut ${response.status}).`;
+    throw new Error(`Réponse ${engine} invalide : réponse non JSON (statut ${response.status}).`);
   }
   if (!response.ok) {
-    if (isRecord(data) && typeof data.error === 'string') throw truncate(data.error);
-    throw `Réponse ${engine} invalide : statut ${response.status}`;
+    if (isRecord(data) && typeof data.error === 'string') throw new Error(truncate(data.error));
+    throw new Error(`Réponse ${engine} invalide : statut ${response.status}`);
   }
   return data;
 }
@@ -128,11 +129,11 @@ async function post({ route, engine }, body, credentials) {
  * @param {string} command - Rust command name (`translate_deepl`, `translate_lara`, `deepl_languages`, `lara_languages`).
  * @param {Record<string, unknown>} [args] - Command arguments (`text`, `source`, `target`, `formal` for translations).
  * @returns {Promise<unknown>} The translation text, or the language lists as returned by the Worker.
- * @throws {string} A French error text.
+ * @throws {Error} Its message is a French error text.
  */
 export async function webInvoke(command, args = {}) {
   const spec = Object.hasOwn(COMMANDS, command) ? COMMANDS[command] : undefined;
-  if (!spec) throw `Commande inconnue : ${command}`;
+  if (!spec) throw new Error(`Commande inconnue : ${command}`);
 
   const credentials = await credentialHeaders(spec.engine);
   if (!spec.translate) return post(spec, {}, credentials);
@@ -144,7 +145,7 @@ export async function webInvoke(command, args = {}) {
     credentials
   );
   if (!isRecord(data) || typeof data.translation !== 'string') {
-    throw `Réponse ${spec.engine} invalide : traduction absente.`;
+    throw new Error(`Réponse ${spec.engine} invalide : traduction absente.`);
   }
   return data.translation;
 }

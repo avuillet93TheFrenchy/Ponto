@@ -54,6 +54,16 @@ function getDb() {
 }
 
 /**
+ * The failure of a transaction; `error` is null when the browser gives no reason.
+ * @param {IDBTransaction} tx
+ * @param {IDBRequest} [request]
+ * @returns {DOMException}
+ */
+function transactionError(tx, request) {
+  return tx.error ?? request?.error ?? new DOMException('Transaction failed', 'AbortError');
+}
+
+/**
  * Runs one operation on the `kv` store. Settles when the transaction ends, not when the request
  * succeeds: a commit that fails afterwards (quota, abort) must not look like a successful write.
  * @template T
@@ -67,8 +77,8 @@ function run(db, mode, op) {
     const tx = db.transaction(STORE, mode);
     const request = op(tx.objectStore(STORE));
     tx.oncomplete = () => resolve(request.result);
-    tx.onerror = () => reject(tx.error ?? request.error);
-    tx.onabort = () => reject(tx.error ?? new DOMException('Transaction aborted', 'AbortError'));
+    tx.onerror = () => reject(transactionError(tx, request));
+    tx.onabort = () => reject(transactionError(tx, request));
   });
 }
 
@@ -149,8 +159,8 @@ async function createMasterKey(db) {
       }
     };
     tx.oncomplete = () => resolve(winner);
-    tx.onerror = () => reject(tx.error);
-    tx.onabort = () => reject(tx.error);
+    tx.onerror = () => reject(transactionError(tx));
+    tx.onabort = () => reject(transactionError(tx));
   });
 }
 
@@ -287,7 +297,7 @@ export async function vaultIsPersistent() {
  */
 export function resetVaultForTests() {
   memory.clear();
-  dbPromise?.then((db) => db?.close());
+  void dbPromise?.then((db) => db?.close());
   dbPromise = null;
   keyPromise = null;
   persistent = true;

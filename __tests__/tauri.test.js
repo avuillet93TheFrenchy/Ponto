@@ -187,7 +187,8 @@ describe('tauriInvoke hors Tauri', () => {
 
     expect(plugin.core.invoke).not.toHaveBeenCalled();
     expect(thrown).toBeInstanceOf(tauri.CoreError);
-    expect(thrown.cause).toBe('Clé API DeepL manquante. Ajoutez-la dans les Paramètres.');
+    expect(thrown.cause).toBeInstanceOf(Error);
+    expect(thrown.cause.message).toBe('Clé API DeepL manquante. Ajoutez-la dans les Paramètres.');
   });
 });
 

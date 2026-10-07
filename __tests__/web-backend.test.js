@@ -34,13 +34,14 @@ function lastCall() {
 
 /**
  * @param {Promise<unknown>} promise
- * @returns {Promise<unknown>} The thrown value.
+ * @returns {Promise<string>} The message of the thrown `Error` (anything else fails the test).
  */
 async function thrown(promise) {
   try {
     await promise;
   } catch (err) {
-    return err;
+    expect(err).toBeInstanceOf(Error);
+    return /** @type {Error} */ (err).message;
   }
   throw new Error('did not throw');
 }
@@ -178,7 +179,7 @@ describe('webInvoke', () => {
   it("un message d'erreur du serveur démesuré est tronqué", async () => {
     fetchMock.mockResolvedValue(jsonReply({ error: 'x'.repeat(5000) }, 500));
 
-    const err = /** @type {string} */ (await thrown(webInvoke('translate_deepl', ARGS)));
+    const err = await thrown(webInvoke('translate_deepl', ARGS));
 
     expect(err.length).toBeLessThanOrEqual(300);
     expect(err.endsWith('…')).toBe(true);
