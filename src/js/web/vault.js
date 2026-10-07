@@ -247,8 +247,9 @@ export async function vaultSet(name, value) {
 }
 
 /**
- * Rejects when the persistent store could not delete the value (it may still
- * be on disk); the memory copy is always removed.
+ * Rejects when a delete on the open persistent store fails (the value may
+ * still be on disk); the memory copy is always removed. Without a persistent
+ * store (IndexedDB unavailable) it only empties memory and resolves.
  * @param {string} name
  * @returns {Promise<void>}
  */
