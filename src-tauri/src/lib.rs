@@ -18,17 +18,21 @@ pub fn run() {
     sentry_options.transport = Some(std::sync::Arc::new(http::SentryTransportFactory));
   }
 
-  // With an empty DSN Sentry stays disabled, so builds without SENTRY_DSN still run.
+  // The crash reporter re-launches the executable, which is only possible on
+  // desktop, so native crash reports are limited to Windows.
+  #[cfg(desktop)]
+  {
+    sentry_options = sentry_options
+      .add_integration(sentry::integrations::minidump::MinidumpIntegration::new());
+  }
+
+  // Caution! Everything before here runs in both the app and the crash reporter
+  // processes. With an empty DSN Sentry stays disabled, so builds without
+  // SENTRY_DSN still run.
   let sentry_client = sentry::init((
     option_env!("SENTRY_DSN").unwrap_or(""),
     sentry_options,
   ));
-
-  // Caution! Everything before here runs in both the app and the crash reporter
-  // processes. The crash reporter re-launches the executable, which is only
-  // possible on desktop, so native crash reports are limited to Windows.
-  #[cfg(desktop)]
-  let _minidump_guard = tauri_plugin_sentry::minidump::init(&sentry_client);
   // Everything after here runs in the app process only.
 
   let mut builder = tauri::Builder::default();
