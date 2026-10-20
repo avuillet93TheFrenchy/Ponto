@@ -1,0 +1,44 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": [
+      "ESNext",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "strict": true,
+    "noEmit": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "checkJs": true,
+    "types": [
+      "node",
+      "vite/client",
+      "vitest/globals"
+    ],
+    "paths": {
+      "@tauri": ["./src/tauri/index.js"],
+      "@tauri/*": ["./src/tauri/*"],
+      "@js/*": ["./src/js/*"],
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "src/**/*.js",
+    "src/**/*.d.ts",
+    "__tests__/**/*.js",
+    "worker/src/**/*.ts",
+    "*.config.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src-tauri/target"
+  ]
+}

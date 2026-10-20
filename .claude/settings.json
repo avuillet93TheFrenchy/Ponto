@@ -1,0 +1,96 @@
+{
+    "permissions": {
+        "allow": [
+            "Bash(bash .claude/hooks/run-node.sh project-context.js)",
+            "Bash(node .claude/hooks/project-context.js)",
+            "Bash(bun .claude/hooks/project-context.js)",
+
+            "Bash(bun run test)",
+            "Bash(bun run test:*)",
+            "Bash(bun run lint)",
+            "Bash(bun run lint:*)",
+            "Bash(bun run typecheck)",
+            "Bash(bun run build)",
+            "Bash(bun run dev)",
+            "Bash(bun install)",
+            "Bash(bunx vitest:*)",
+            "Bash(bunx playwright *)",
+            "Bash(bun run tauri:*)",
+
+            "Bash(npm run test)",
+            "Bash(npm run test:*)",
+            "Bash(npm test)",
+            "Bash(npm run lint)",
+            "Bash(npm run lint:*)",
+            "Bash(npm run typecheck)",
+            "Bash(npm run build)",
+            "Bash(npm run dev)",
+            "Bash(npm install)",
+            "Bash(npm ci)",
+            "Bash(npx vitest:*)",
+            "Bash(npx jest:*)",
+            "Bash(npx playwright *)",
+            "Bash(npm run tauri:*)",
+
+            "Bash(pnpm run test)",
+            "Bash(pnpm run test:*)",
+            "Bash(pnpm test)",
+            "Bash(pnpm run lint)",
+            "Bash(pnpm run lint:*)",
+            "Bash(pnpm run typecheck)",
+            "Bash(pnpm run build)",
+            "Bash(pnpm run dev)",
+            "Bash(pnpm install)",
+            "Bash(pnpm exec vitest:*)",
+            "Bash(pnpm exec jest:*)",
+            "Bash(pnpm exec playwright *)",
+            "Bash(pnpm run tauri:*)",
+
+            "Bash(yarn run test)",
+            "Bash(yarn run test:*)",
+            "Bash(yarn test)",
+            "Bash(yarn run lint)",
+            "Bash(yarn run lint:*)",
+            "Bash(yarn run typecheck)",
+            "Bash(yarn run build)",
+            "Bash(yarn run dev)",
+            "Bash(yarn install)",
+            "Bash(yarn exec vitest:*)",
+            "Bash(yarn exec jest:*)",
+            "Bash(yarn exec playwright *)",
+            "Bash(yarn run tauri:*)"
+        ],
+        "deny": [
+            "Bash(git push --force*)",
+            "Bash(git reset --hard*)",
+            "Bash(git clean -f*)",
+            "Bash(git checkout .)",
+            "Bash(git restore .)",
+            "Bash(git branch -D*)"
+        ]
+    },
+    "hooks": {
+        "PreToolUse": [
+            {
+                "matcher": "Edit|Write|NotebookEdit|Bash",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run-node.sh\" pre-edit-guard.js"
+                    }
+                ]
+            }
+        ],
+        "PostToolUse": [
+            {
+                "matcher": "Edit|Write",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run-node.sh\" post-lint.js"
+                    }
+                ]
+            }
+        ]
+    }
+}

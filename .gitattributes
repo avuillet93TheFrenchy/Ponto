@@ -1,0 +1,26 @@
+# Normalize line endings: LF in the repo and in the working tree
+* text=auto eol=lf
+
+# Shell scripts must stay LF (CRLF breaks the shebang on Linux)
+*.sh text eol=lf
+
+# Windows scripts need CRLF (cmd.exe misreads labels and goto in LF batch files)
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary files (Tauri icons, images, fonts, installers)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.exe binary
+*.apk binary
+*.jar binary
+*.rpm binary
+*.AppImage binary
+*.deb binary

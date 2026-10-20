@@ -1,0 +1,28 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Permissions shared by Windows, Linux and Android",
+  "windows": [
+    "main"
+  ],
+  "platforms": [
+    "windows",
+    "linux",
+    "android"
+  ],
+  "permissions": [
+    "core:default",
+    "log:default",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        { "url": "https://auth.deepl.com/*" },
+        { "url": "https://www.deepl.com/*" },
+        { "url": "https://app.laratranslate.com/*" }
+      ]
+    },
+    "process:allow-exit",
+    "sentry:default",
+    "store:default"
+  ]
+}

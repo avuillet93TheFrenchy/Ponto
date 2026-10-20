@@ -1,0 +1,31 @@
+{
+    "$schema": "../../project.schema.json",
+    "name": "HatMP",
+    "description": "Tauri v2 + Vite + vanilla JS (JSDoc-typed) game, shipped for Windows, Linux, Android and the web.",
+    "packageManager": "bun",
+    "paths": {
+        "src": "src",
+        "tests": "__tests__",
+        "e2e": "__tests__/e2e",
+        "styles": "src/scss",
+        "tauri": "src-tauri"
+    },
+    "coverage": {
+        "statements": 95,
+        "functions": 95,
+        "lines": 95,
+        "branches": 90,
+        "exclude": ["src/js/migrator/**", "scripts/sync-agents.js"]
+    },
+    "protectedPaths": ["src/libs/**", "src-tauri/icons/**"],
+    "lint": {
+        "exclude": ["src/js/migrator/**"]
+    },
+    "conventions": [".claude/examples/hatmp/conventions.md"],
+    "notes": [
+        "src/js/migrator/ is the original engine: excluded from lint (lint:legacy) and unit coverage, covered by __tests__/e2e/legacy-engine.spec.js.",
+        "Every new file carries an SPDX header or an entry in REUSE.toml; code from the original game keeps FF5's copyright.",
+        "User-facing text goes through t() / data-i18n*, with the key in every src/local/*.json (English is the reference).",
+        "The web build needs VITE_ASSETS_BASE_URL: resourceUrl() in src/js/resourceLoader.js loads every game asset from it."
+    ]
+}

@@ -1,0 +1,113 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Claude toolkit project profile",
+    "description": "Optional profile read by the hooks, agents and skills of .claude/. Every field is optional: what is missing is detected from the repository (run `bash .claude/hooks/run-node.sh project-context.js` to see the result).",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "$schema": { "type": "string" },
+        "name": {
+            "type": "string",
+            "description": "Project name used in reports. Default: package.json productName/name, then the folder name."
+        },
+        "description": {
+            "type": "string",
+            "description": "One line on what the project is (stack, targets). Default: package.json description."
+        },
+        "packageManager": {
+            "enum": ["auto", "bun", "npm", "pnpm", "yarn"],
+            "description": "Default: package.json packageManager field, then the lockfile, then npm."
+        },
+        "stack": {
+            "type": "object",
+            "description": "Force a stack flag instead of detecting it from package.json (true/false, or \"auto\").",
+            "additionalProperties": {
+                "oneOf": [{ "type": "boolean" }, { "const": "auto" }, { "type": "array", "items": { "type": "string" } }]
+            },
+            "properties": {
+                "typescript": {}, "vite": {}, "tauri": {}, "rust": {}, "vitest": {}, "jest": {}, "playwright": {},
+                "eslint": {}, "stylelint": {}, "htmlhint": {}, "biome": {}, "sass": {}, "tailwind": {}, "sentry": {},
+                "reuse": {}, "sonar": {},
+                "frameworks": { "type": "array", "items": { "type": "string" } }
+            }
+        },
+        "scripts": {
+            "type": "object",
+            "description": "package.json script name for each logical task, or null when the project has none. Default: detected among common names (test, test:coverage, test:e2e, lint, typecheck...).",
+            "additionalProperties": false,
+            "properties": {
+                "dev": { "type": ["string", "null"] },
+                "build": { "type": ["string", "null"] },
+                "test": { "type": ["string", "null"] },
+                "coverage": { "type": ["string", "null"] },
+                "e2e": { "type": ["string", "null"] },
+                "lint": { "type": ["string", "null"] },
+                "typecheck": { "type": ["string", "null"] },
+                "format": { "type": ["string", "null"] }
+            }
+        },
+        "paths": {
+            "type": "object",
+            "description": "Project-relative folders. Default: detected (src, __tests__|tests|test, <tests>/e2e, src/scss|src/styles|src/css, src-tauri).",
+            "additionalProperties": false,
+            "properties": {
+                "src": { "type": "string" },
+                "tests": { "type": ["string", "null"] },
+                "e2e": { "type": ["string", "null"] },
+                "styles": { "type": ["string", "null"] },
+                "tauri": { "type": ["string", "null"] }
+            }
+        },
+        "coverage": {
+            "type": "object",
+            "description": "Coverage thresholds the test tooling enforces (percent). Informative: the agents report against them.",
+            "additionalProperties": false,
+            "properties": {
+                "statements": { "type": "number" },
+                "branches": { "type": "number" },
+                "functions": { "type": "number" },
+                "lines": { "type": "number" },
+                "exclude": { "type": "array", "items": { "type": "string" } }
+            }
+        },
+        "bundleBudget": {
+            "type": "object",
+            "description": "Bundle size gate in KB (gzip). Default used by the agents: initial JS 200/400, vendor 150/300, total 500/1000.",
+            "additionalProperties": {
+                "type": "object",
+                "properties": { "warn": { "type": "number" }, "block": { "type": "number" } }
+            }
+        },
+        "protectedPaths": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Globs the pre-edit hook refuses to modify, added to the defaults (lockfiles, dist/**, keystores, generated Tauri files). Prefix with ! to remove a default. .env files and node_modules are always protected."
+        },
+        "lint": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "exclude": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Globs the post-edit lint hook skips, added to the defaults (dist/**, build/**, coverage/**, vendor/**). Prefix with ! to remove a default."
+                },
+                "linters": {
+                    "type": "object",
+                    "description": "File extension → linter, overriding the detected map. null disables linting for that extension.",
+                    "additionalProperties": { "enum": ["eslint", "stylelint", "htmlhint", "biome", null] }
+                }
+            }
+        },
+        "conventions": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Files describing the project conventions that reviewers and generators must read, added to CLAUDE.md / AGENTS.md / CONTRIBUTING.md when they exist."
+        },
+        "notes": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Short project-specific rules every agent should know (one sentence each)."
+        }
+    }
+}

@@ -1,0 +1,22 @@
+name = "ponto"
+main = "src/index.ts"
+compatibility_date = "2026-10-05"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "../dist"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+
+# Request logs stay off: translated text and keys must never be recorded.
+[observability]
+enabled = false
+
+# 30 requests per minute per IP (the Worker keys on CF-Connecting-IP).
+[[ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "1001"
+
+  [ratelimits.simple]
+  limit = 30
+  period = 60
