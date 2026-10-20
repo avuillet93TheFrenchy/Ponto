@@ -12,6 +12,7 @@ if ($PSVersionTable.PSEdition -ne 'Core') {
 }
 
 $ProjectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+Set-Location $ProjectRoot
 $TargetDir = Join-Path $ProjectRoot "src-tauri\target"
 
 function Write-ColorOutput {

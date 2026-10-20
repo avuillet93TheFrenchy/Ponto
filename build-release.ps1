@@ -46,6 +46,8 @@ function Invoke-Pnpm {
   param([string[]]$Arguments, [hashtable]$ExtraEnv = @{})
   $psi = [System.Diagnostics.ProcessStartInfo]::new('cmd.exe', '/c pnpm ' + ($Arguments -join ' '))
   $psi.UseShellExecute = $false
+  # Set-Location does not change the .NET current directory that ProcessStartInfo defaults to.
+  $psi.WorkingDirectory = $PSScriptRoot
   foreach ($name in $ExtraEnv.Keys) { $psi.Environment[$name] = [string]$ExtraEnv[$name] }
   $process = [System.Diagnostics.Process]::Start($psi)
   $process.WaitForExit()
